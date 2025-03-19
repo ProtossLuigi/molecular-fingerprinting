@@ -1,3 +1,8 @@
 pandas
 openpyxl
 pyarrow
+ipykernel
+ipywidgets
+torch
+datasets
+transformers
