@@ -6,3 +6,7 @@ ipywidgets
 torch
 datasets
 transformers
+accelerate
+evaluate
+scikit-learn
+wandb
