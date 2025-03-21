@@ -10,3 +10,4 @@ accelerate
 evaluate
 scikit-learn
 wandb
+matplotlib
