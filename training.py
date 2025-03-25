@@ -39,7 +39,7 @@ ds = {
 }
 
 # %%
-model = MLPModel().cuda()
+model = MLPModel([2048, 1024, 512, 256], nn.PReLU).cuda()
 
 # %%
 training_args = TrainingArguments(

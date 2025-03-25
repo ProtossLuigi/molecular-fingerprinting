@@ -1,22 +1,20 @@
 import math
+from typing import List
 from torch import nn
 import torch
 
 
 class MLPModel(nn.Module):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, hidden_sizes: List[int], activation_layer: type[nn.Module] = nn.ReLU, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        activation_layer = nn.ReLU
         self.net = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(840 * 4, 1024),
-            activation_layer(),
-            nn.Linear(1024, 128),
-            activation_layer(),
-            nn.Linear(128, 1),
-            # nn.Sigmoid()
+            nn.Flatten()
         )
+        for in_dim, out_dim in zip([3360] + hidden_sizes, hidden_sizes):
+            self.net.append(nn.Linear(in_dim, out_dim))
+            self.net.append(activation_layer())
+        self.net.append(nn.Linear(hidden_sizes[-1], 1))
         self.loss_fn = nn.BCEWithLogitsLoss()
     
     def forward(self, inputs, labels=None):
