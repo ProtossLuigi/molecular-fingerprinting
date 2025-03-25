@@ -22,23 +22,13 @@ import wandb
 # ds = ds.cast_column('label', Value('float64'))
 
 # %%
-class LabeledDataset(Dataset):
-    def __init__(self, ds: Dataset, active_label: int = 1):
-        super().__init__()
-        self.ds = ds
-        self.active_label = active_label
-    
-    def __getitem__(self, index):
-        sample = self.ds.__getitem__(index)
-        return {'inputs': sample[0], 'labels': sample[self.active_label]}
-    
-    def __len__(self):
-        return len(self.ds)
+from src.datasets import LabeledDataset
+from src.models import *
 
-
+# %%
 ds = torch.load('data/dataset.pt', weights_only=False)
 
-ds = LabeledDataset(ds)
+ds = LabeledDataset(ds, active_label=1)
 
 generator = torch.Generator().manual_seed(42)
 splits = random_split(ds, [.8, .1, .1], generator)
@@ -49,36 +39,7 @@ ds = {
 }
 
 # %%
-class CustomModel(nn.Module):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        activation_layer = nn.ReLU
-        self.net = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(840 * 4, 1024),
-            activation_layer(),
-            nn.Linear(1024, 128),
-            activation_layer(),
-            nn.Linear(128, 1),
-            # nn.Sigmoid()
-        )
-        self.loss_fn = nn.BCEWithLogitsLoss()
-    
-    def forward(self, inputs, labels=None):
-        # print(inputs, labels)
-        inputs = inputs.to(self._dtype())
-        logits = self.net(inputs).squeeze()
-        if labels is not None:
-            labels = labels.to(logits.dtype)
-            loss = self.loss_fn(logits, labels)
-            return {"loss": loss, "logits": logits}
-        return {"logits": logits}
-    
-    def _dtype(self):
-        return self.net[1].weight.dtype
-
-model = CustomModel().cuda()
+model = MLPModel().cuda()
 
 # %%
 training_args = TrainingArguments(
@@ -86,6 +47,7 @@ training_args = TrainingArguments(
     per_device_train_batch_size=1024,
     per_device_eval_batch_size=1024,
     learning_rate=1e-3,
+    warmup_ratio=.1,
     num_train_epochs=100,
     weight_decay=.01,
     eval_strategy='epoch',
